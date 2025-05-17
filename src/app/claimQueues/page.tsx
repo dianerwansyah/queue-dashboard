@@ -305,5 +305,171 @@ export default function QueuesPage() {
       </div>
     );
   }
- 
+  return (
+    <>
+      <ToastContainer position="bottom-right" />
+      <div>
+        {/* Header with */}
+        <div className="mb-6 flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Claim Queues</h1>
+            <p className="text-gray-600">
+              View and manage all queues in the system
+            </p>
+          </div>
+        </div>
+        {/* View Queue Form Modal */}
+        {showViewForm && selectedQueue && selectedQueue.form === "View" && (
+          <ViewQueueForm queue={selectedQueue} onClose={handleFormViewClose} />
+        )}
+
+        {/* Edit Queue Form Modal */}
+        {showClaimForm && selectedQueue && selectedQueue.form === "Edit" && (
+          <ClaimQueueForm
+            queue={selectedQueue}
+            onClose={handleFormEditClose}
+            onSave={handleFormEditSave}
+          />
+        )}
+
+        {/* Claim Queue Form Modal */}
+        {showClaimForm && selectedQueue && selectedQueue.form === "Claim" && (
+          <ClaimQueueForm
+            queue={selectedQueue}
+            onClose={handleFormClaimClose}
+            onSave={handleFormClaimSave}
+          />
+        )}
+
+        {/* Retry Queue Form Modal */}
+        {showClaimForm && selectedQueue && selectedQueue.form === "Retry" && (
+          <ClaimQueueForm
+            queue={selectedQueue}
+            onClose={handleFormRetryClose}
+            onSave={handleFormRetrySave}
+          />
+        )}
+
+        {/* Filters */}
+
+        <div className="mb-6 flex gap-4 text-black">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <input
+              type="text"
+              placeholder="Search Task Name"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div className="relative">
+            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <select
+              value={statusFilter}
+              onChange={(e) =>
+                setStatusFilter(e.target.value as Queue["status"] | "all")
+              }
+              className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white"
+            >
+              {statusOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          {/* Clear Button */}
+          <button
+            onClick={() => {
+              setSearchTerm("");
+              setStatusFilter("all");
+            }}
+            className="px-4 py-2 text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors"
+            type="button"
+          >
+            Clear
+          </button>
+        </div>
+
+        {/* Table */}
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  {columns.map((col) => (
+                    <th
+                      key={col.key}
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      {col.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {(queues ?? []).map((queue) => (
+                  <tr key={queue.id} className="hover:bg-gray-50">
+                    {columns.map((col) => (
+                      <td
+                        key={col.key}
+                        className={`px-6 py-4 whitespace-nowrap text-sm text-gray-900 ${
+                          col.truncate ? "max-w-xs truncate text-gray-500" : ""
+                        } ${col.isAction ? "text-center" : ""}`}
+                      >
+                        {col.isAction ? (
+                          <div className="relative inline-block text-left">
+                            <button
+                              onClick={() => toggleDropdown(queue.id)}
+                              className="p-1 hover:bg-gray-100 rounded "
+                            >
+                              <MoreVertical className="w-5 h-5 text-gray-600" />
+                            </button>
+
+                            {dropdownOpenId === queue.id && (
+                              <div className="absolute z-50 right-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg">
+                                {dropdownItems
+                                  .filter((item) => item.condition(queue))
+                                  .map((item, idx) => (
+                                    <button
+                                      key={idx}
+                                      onClick={() => {
+                                        item.onClick(queue);
+                                        setDropdownOpenId(null);
+                                      }}
+                                      className={`w-full flex items-center px-4 py-2 text-sm hover:bg-gray-100 ${item.color}`}
+                                    >
+                                      <item.icon className="w-4 h-4 mr-2" />
+                                      {item.label}
+                                    </button>
+                                  ))}
+                              </div>
+                            )}
+                          </div>
+                        ) : col.isStatus ? (
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusBadgeColor(
+                              queue.status
+                            )}`}
+                          >
+                            {queue.status}
+                          </span>
+                        ) : col.isDate ? (
+                          formatDate(queue[col.key as keyof Queue] as string)
+                        ) : (
+                          queue[col.key as keyof Queue]
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </>
+  );
 }
